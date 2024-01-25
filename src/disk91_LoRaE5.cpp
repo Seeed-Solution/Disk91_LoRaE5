@@ -10,14 +10,11 @@
  */
 #include "disk91_LoRaE5.h"
 #include <stdio.h>
-
 // =============================================================================
 // Helpers
-
 void Disk91_LoRaE5::tracef(const char *format, ...) {
     #ifdef __DSKLORAE5_ENABLE
         if ( this->debugUart == NULL ) return;
-
         va_list args;
         char 	fmtBuffer[__DSKLORAE5_TRACE_MAX_BUF_SZ]; 
         va_start(args,format);
@@ -27,11 +24,11 @@ void Disk91_LoRaE5::tracef(const char *format, ...) {
     #endif
 }
 
+#ifndef ESP_ARDUINO_VERSION
 #ifndef DSKLORAE5_DISABLE_FSTR
 void Disk91_LoRaE5::tracef(const __FlashStringHelper *format, ...) {
     #ifdef __DSKLORAE5_ENABLE
         if ( this->debugUart == NULL ) return;
-
         va_list args;
         char 	fmtBuffer[__DSKLORAE5_TRACE_MAX_BUF_SZ]; 
         va_start(args,format);
@@ -42,6 +39,7 @@ void Disk91_LoRaE5::tracef(const __FlashStringHelper *format, ...) {
 }
 #else
   #define F(x) x
+#endif
 #endif
 
 // compare str with a ref string and return true when
@@ -60,7 +58,6 @@ bool startsWith(const char * str, const char * ref) {
   }
   return false;
 }
-
 // search for index of char after the ref string in the str
 // return -1 when not found
 int indexOf(const char * str, const char * ref) {
@@ -81,7 +78,6 @@ int indexOf(const char * str, const char * ref) {
   }
   return -1;
 }
-
 // copy a hex string into a table
 // returns the hexbyte in dst tab and the number of data in sz
 // sz is also the max capacity of dst
@@ -98,7 +94,6 @@ bool extractHexStr(const char * src, uint8_t * dst, uint8_t * sz) {
      } else if ( src[i] >= 'A' && src[i] <= 'F' ) {
         tNum += 10 + src[i] - 'A';
      } else break;
-
      if ( (i & 1) == 0 ) {
        // 1st digit
        tNum *= 16;
@@ -114,7 +109,6 @@ bool extractHexStr(const char * src, uint8_t * dst, uint8_t * sz) {
    *sz = tSz;
    return true;
 }
-
 // copy a float number into dst string
 bool extractNumber(const char * src, char *dst, int maxSz) {
     int idx = 0;
@@ -131,8 +125,6 @@ bool extractNumber(const char * src, char *dst, int maxSz) {
     }
     return false;
 }
-
-
 bool Disk91_LoRaE5::processRead( Disk91_LoRaE5 * wrap) {
     if ( startsWith(wrap->bufResponse,"+EEPROM: **, **") ) {
      int s = indexOf(wrap->bufResponse,"PROM: ");
@@ -147,13 +139,11 @@ bool Disk91_LoRaE5::processRead( Disk91_LoRaE5 * wrap) {
    }
    return false;
 }
-
 bool Disk91_LoRaE5::storeOneByte(uint8_t adr, uint8_t v) {
     char _cmd[128];
     sprintf(_cmd,"AT+EEPROM=%02X,%02X", adr, v);
     return sendATCommand(_cmd,"+EEPROM: ","","",this->atTimeout,false,NULL);     
 }
-
 bool Disk91_LoRaE5::readOneByte(uint8_t adr, uint8_t * v) {
     char _cmd[128];
     sprintf(_cmd,"AT+EEPROM=%02X",adr);
@@ -163,8 +153,6 @@ bool Disk91_LoRaE5::readOneByte(uint8_t adr, uint8_t * v) {
     }
     return false;
 }
-
-
 // =============================================================================
 // Persistance
 struct s_persist {
@@ -175,7 +163,6 @@ struct s_persist {
     uint8_t zone;
     uint8_t recomp[6];
 };
-
 bool Disk91_LoRaE5::persistConfig(  // Store the LoRaWan configuration into module EEPROM for restoring later 
         uint8_t   zone,             // radio zone selection
         uint8_t   deveui[],         // deviceEUI in the normal order for the bytes
@@ -195,7 +182,6 @@ bool Disk91_LoRaE5::persistConfig(  // Store the LoRaWan configuration into modu
     }
     return ret;
 }
-
 bool Disk91_LoRaE5::clearStoredConfig( // Purge the stored configuration for E5
 ) {
     bool ret = true;
@@ -204,8 +190,6 @@ bool Disk91_LoRaE5::clearStoredConfig( // Purge the stored configuration for E5
     }
     return ret;
 }
-
-
 bool Disk91_LoRaE5::haveStoredConfig( // Returns true when a configuration has already been stored in the E5 memory
 ) {
     bool ret = true;
@@ -219,10 +203,8 @@ bool Disk91_LoRaE5::haveStoredConfig( // Returns true when a configuration has a
     }
     return true;
 }
-
 // =============================================================================
 // Constructor / Destructors
-
 Disk91_LoRaE5::Disk91_LoRaE5(
         uint16_t  atTimeoutMs,               // Default timeout for the AT command processing
         Serial_ * logSerial                  // When set, the library debug is enabled               
@@ -233,7 +215,6 @@ Disk91_LoRaE5::Disk91_LoRaE5(
     this->currentZone = DSKLORAE5_ZONE_UNDEFINED;
     this->estimatedDCMs = 0;
 }
-
 Disk91_LoRaE5::Disk91_LoRaE5(
         Serial_ * logSerial                  // When set, the library debug is enabled               
 ){
@@ -243,7 +224,6 @@ Disk91_LoRaE5::Disk91_LoRaE5(
     this->currentZone = DSKLORAE5_ZONE_UNDEFINED;
     this->estimatedDCMs = 0;
 }
-
 Disk91_LoRaE5::Disk91_LoRaE5() {
     this->debugUart = NULL;
     this->runningCommand = false;
@@ -251,8 +231,6 @@ Disk91_LoRaE5::Disk91_LoRaE5() {
     this->currentZone = DSKLORAE5_ZONE_UNDEFINED;
     this->estimatedDCMs = 0;
 }
-
-
 Disk91_LoRaE5::Disk91_LoRaE5(
     bool nothing                            // Strange complilation behavior, no param is not accepted
 ){
@@ -262,12 +240,9 @@ Disk91_LoRaE5::Disk91_LoRaE5(
     this->currentZone = DSKLORAE5_ZONE_UNDEFINED;
     this->estimatedDCMs = 0;
 }
-
-
 Disk91_LoRaE5::~Disk91_LoRaE5(){
       this->end();              
 }
-
 bool Disk91_LoRaE5::begin(  
         uint8_t portType,                   // where to find the LoRa-E5 board  
         __HWSERIAL_T   * hwSerial,          // for HWSERIAL_CUSTOM, link the associated Serial
@@ -296,7 +271,11 @@ bool Disk91_LoRaE5::begin(
         #endif    
         case DSKLORAE5_HWSERIAL_CUSTOM:
             if ( hwSerial == NULL ) {
+                #ifdef ESP_ARDUINO_VERSION
+                this->tracef("LoRaE5 - invalid hw serial selection\r\n");
+                #else
                 this->tracef(F("LoRaE5 - invalid hw serial selection\r\n"));
+                #endif
                 return false;
             }
             this->e5Uart = hwSerial;
@@ -304,7 +283,11 @@ bool Disk91_LoRaE5::begin(
             break;
         case DSKLORAE5_SWSERIAL_CUSTOM:
             if ( swSerial == NULL ) {
+                #ifdef ESP_ARDUINO_VERSION
+                this->tracef("LoRaE5 - invalid sw serial selection\r\n");
+                #else
                 this->tracef(F("LoRaE5 - invalid sw serial selection\r\n"));
+                #endif
                 return false;
             }
             this->e5SwUart = swSerial;
@@ -312,7 +295,11 @@ bool Disk91_LoRaE5::begin(
             break;
         case DSKLORAE5_SWSERIAL_PINS:
             if ( ssRxPort == -1 || ssTxPort == -1 ) {
+                #ifdef ESP_ARDUINO_VERSION
+                this->tracef("LoRaE5 - invalid sw serial pins\r\n");
+                #else
                 this->tracef(F("LoRaE5 - invalid sw serial pins\r\n"));
+                #endif
                 return false;
             }
             this->e5SwUart = new SoftwareSerial(ssRxPort, ssTxPort,false);
@@ -330,7 +317,6 @@ bool Disk91_LoRaE5::begin(
             this->isHwSerial = false;
             break;
         #endif
-
         case DSKLORAE5_HWSEARCH:
             #ifdef __SERIAL
                 this->e5Uart = &Serial;
@@ -350,7 +336,11 @@ bool Disk91_LoRaE5::begin(
                 if ( testPresence() ) break;
                 this->e5Uart = NULL;
             #endif
+            #ifdef ESP_ARDUINO_VERSION
+            this->tracef("LoRaE5 - not found\r\n");
+            #else
             this->tracef(F("LoRaE5 - not found\r\n"));
+            #endif
             return false;
             break;
 
@@ -382,7 +372,11 @@ bool Disk91_LoRaE5::begin(
                 delete this->e5SwUart;
                 this->e5SwUart = NULL;
             #endif
+            #ifdef ESP_ARDUINO_VERSION
+            this->tracef("LoRaE5 - not found\r\n");
+            #else
             this->tracef(F("LoRaE5 - not found\r\n"));
+            #endif
             return false;
             break;
         #endif
@@ -397,7 +391,11 @@ bool Disk91_LoRaE5::begin(
         while ( !(*this->e5SwUart) && (millis() - start) < 1000 );
     }
     if ( (millis() - start) >= 1000 ) {
+        #ifdef ESP_ARDUINO_VERSION
+        this->tracef("LoRaE5 - Impossible to connect Serial\r\n");
+        #else
         this->tracef(F("LoRaE5 - Impossible to connect Serial\r\n"));
+        #endif
         return false;
     }
     // Init contexte
@@ -409,7 +407,6 @@ bool Disk91_LoRaE5::begin(
     this->lastRetry = 0;
     this->currentSeqId = 1;
     this->downlinkPending = false;
-
     // Verify module response
     this->runningCommand = false;
     if ( !sendATCommand("AT","+AT: OK","","",this->atTimeout,false,NULL) ) {
@@ -421,8 +418,12 @@ bool Disk91_LoRaE5::begin(
             return false;
         }
     }
-    
+
+    #ifdef ESP_ARDUINO_VERSION
+    this->tracef("LoRaE5 - initialization OK\r\n");
+    #else
     this->tracef(F("LoRaE5 - initialization OK\r\n"));
+    #endif
     return true;
 }
 
@@ -431,7 +432,6 @@ void Disk91_LoRaE5::end() {
         delete this->e5SwUart;
     }
 }
-
 // =============================================================================
 // Setup & test
 bool Disk91_LoRaE5::testPresence() {
@@ -456,7 +456,6 @@ bool Disk91_LoRaE5::testPresence() {
     }
     return true;
 }
-
 bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack with the stored credentials
     bool      selfDC,       // when true, the duty cycle management is not managed by the module but the user application
     bool      withADR       // when true, the ADR is turned ON
@@ -468,7 +467,11 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack with the stored credentia
         ret &= this->readOneByte(i,&pp[i]);
     }
     if ( !ret ) {
+        #ifdef ESP_ARDUINO_VERSION
+        this->tracef("LoRaE5 - Failed to read credentials");
+        #else
         this->tracef(F("LoRaE5 - Failed to read credentials"));
+        #endif
     }
     if ( p.version != 0x01 ) return false; // basic control, can be improved
     return this->setup(
@@ -480,8 +483,6 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack with the stored credentia
         withADR
     );
 }
-
-
 bool Disk91_LoRaE5::setup(  // string like setup
     uint8_t   zone,         // radio zone selection
     String    deveui,       // deviceEUI in the normal order for the bytes
@@ -492,8 +493,6 @@ bool Disk91_LoRaE5::setup(  // string like setup
 ) {
     return this->setup(zone, deveui.c_str(),appeui.c_str(), appkey.c_str(), selfDC, withADR);
 }
-
-
 bool Disk91_LoRaE5::setup(  // c_str like setup
     uint8_t   zone,         // radio zone selection
     char    * deveui,       // deviceEUI in the normal order for the bytes
@@ -507,7 +506,11 @@ bool Disk91_LoRaE5::setup(  // c_str like setup
     uint8_t _appkey[16];
 
     if ( strlen(deveui) != 16 || strlen(appeui) != 16 || strlen(appkey) != 32 ) {
+        #ifdef ESP_ARDUINO_VERSION
+        this->tracef("LoRaE5 - setup invalid parameters\r\n");
+        #else
         this->tracef(F("LoRaE5 - setup invalid parameters\r\n"));
+        #endif
         return false;
     } 
     uint8_t sz = 8;
@@ -518,20 +521,15 @@ bool Disk91_LoRaE5::setup(  // c_str like setup
     sz = 16;
     extractHexStr(appkey, _appkey, &sz);
     if ( sz != 16 ) return false;
-
     return setup(zone, _deveui, _appeui, _appkey, selfDC, withADR);
 }
-
 bool Disk91_LoRaE5::setup(  // setup without changing the ids
     uint8_t   zone,         // radio zone selection
     bool      selfDC,       // when true, the duty cycle management is not managed by the module but the user application
     bool      withADR       // when true, the ADR is turned ON
 ) {
-
     return setup(zone, (uint8_t *)NULL, (uint8_t *)NULL, (uint8_t *)NULL, selfDC, withADR);
 }
-
-
 bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
     uint8_t   zone,         // radio zone selection
     uint8_t   deveui[],     // deviceEUI in the normal order for the bytes
@@ -546,7 +544,6 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
     // Setup region
     if ( this->currentZone != zone  ) { 
         this->currentZone = zone;
-
         if ( zone == DSKLORAE5_ZONE_EU868 ) {
             ret &= sendATCommand("AT+DR=EU868","+DR: EU868","+DR: ERR","",this->atTimeout,false,NULL);
             ret &= sendATCommand("AT+CH=3,867.1,0,5","+CH: 3,8671","+CH: ERR","",this->atTimeout,false,NULL);
@@ -628,12 +625,20 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
                 }
             }
         } else {
+            #ifdef ESP_ARDUINO_VERSION
+            this->tracef("LoRaE5 - Invalid zone setting\r\n");
+            #else
             this->tracef(F("LoRaE5 - Invalid zone setting\r\n"));
+            #endif
             return false;
         }
     }
     if ( !ret ) {
+        #ifdef ESP_ARDUINO_VERSION
+        this->tracef("LoRaE5 - Failed to configure zone\r\n");
+        #else
         this->tracef(F("LoRaE5 - Failed to configure zone\r\n"));
+        #endif
         return false;
     }
     if ( ! withADR ) {
@@ -641,7 +646,6 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
     } else {
         ret &= sendATCommand("AT+ADR=ON","+ADR: ON","+ADR: OFF","",this->atTimeout,false,NULL);
     }
-
     // Setup Ids
     if ( deveui != NULL ) {
         sprintf(_cmd,"AT+ID=DevEUI,%02X%02X%02X%02X%02X%02X%02X%02X",
@@ -656,7 +660,6 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
         );
         ret &= sendATCommand(_cmd,"+ID: DevEui","+ID: ERR","",this->atTimeout,false,NULL);
     }
-
     if ( appeui != NULL ) {
         sprintf(_cmd,"AT+ID=AppEUI,%02X%02X%02X%02X%02X%02X%02X%02X",
           appeui[0],
@@ -670,7 +673,6 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
         );
         ret &= sendATCommand(_cmd,"+ID: AppEui","+ID: ERR","",this->atTimeout,false,NULL);
     }
-
     if ( appkey != NULL ) {
         sprintf(_cmd,"AT+KEY=APPKEY,%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
           appkey[0],
@@ -694,16 +696,23 @@ bool Disk91_LoRaE5::setup(  // Setup the LoRaWAN stack
     }
     ret &= sendATCommand("AT+MODE=LWOTAA","+MODE: LWOTAA","+MODE: ERR","",this->atTimeout,false,NULL);    
     if ( !ret ) {
+        #ifdef ESP_ARDUINO_VERSION
+        this->tracef("LoRaE5 - Failed to configure credentials\r\n");
+        #else
         this->tracef(F("LoRaE5 - Failed to configure credentials\r\n"));
+        #endif
         return false;
     }
+    #ifdef ESP_ARDUINO_VERSION
+    this->tracef("LoRaE5 - setup OK\r\n");
+    #else
     this->tracef(F("LoRaE5 - setup OK\r\n"));
+    #endif
     return true;
 }
 
 // =============================================================================
 // Send Data
-
 bool Disk91_LoRaE5::sendReceive_sync(  // send a message on LoRaWan expert an ack at least, eventually a downlink, return true when sent is a success and expect a ack
         uint8_t     port,               // LoRaWan port
         uint8_t *   data,               // Data / payload to be transmitted
@@ -717,8 +726,6 @@ bool Disk91_LoRaE5::sendReceive_sync(  // send a message on LoRaWan expert an ac
 ){
     return this->sendReceive( port, data, sz, true, NULL, rxBuffer, rxSize, rxPort, sf, pwr, retries, false );
 }
-
-
 bool Disk91_LoRaE5::send_sync(    // send a message on LoRaWan, return true when sent is a success 
         uint8_t     port,               // LoRaWan port
         uint8_t *   data,               // Data / payload to be transmitted
@@ -730,15 +737,12 @@ bool Disk91_LoRaE5::send_sync(    // send a message on LoRaWan, return true when
 ){
     return this->sendReceive( port, data, sz, acked, NULL, NULL, NULL, NULL, sf, pwr, retries, false );
 }
-
 bool Disk91_LoRaE5::join_sync(    // send a message on LoRaWan, return true when sent is a success 
         uint8_t     sf,             // Spread Factor , use DSKLORAE5_SF_UNCHANGED to keep the previous one
         uint8_t     pwr             // Transmission power, use DSKLORAE5_DW_UNCHANGED to keep the previous one
 ){
     return this->sendReceive( 0, NULL, 0, false, NULL, NULL, NULL, NULL, sf, pwr, 0, false );
 }
-
-
 bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true when sent is a success 
     uint8_t     port,               // LoRaWan port
     uint8_t *   data,               // Data / payload to be transmitted
@@ -755,22 +759,28 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
     bool        async               // When true, the processing is made synchronously
 ) {
   char _cmd[128];
-
   if ( sz == 0 && this->hasJoined && !acked ) return true; // basicaly nothing to do
   if ( this->runningCommand ) return false; // re-entering
-
   if ( pwr != DSKLORAE5_DW_UNCHANGED && this->lastPower != pwr ) {
     // set power (E5 automatically set to max if higher than max allowed)
     sprintf(_cmd,"AT+POWER=%d",pwr);
     if ( sendATCommand(_cmd,"+POWER:","+POWER: ERR","",this->atTimeout,false,NULL) ) {
       this->lastPower = pwr;
     } else {
+      #ifdef ESP_ARDUINO_VERSION
+      this->tracef("LoRaE5 - Failed to set power\r\n");
+      #else
       this->tracef(F("LoRaE5 - Failed to set power\r\n"));
+      #endif
       return false;
     }
   }
   if ( this->lastPower == __DSKLORAE5_UNSET_POWER ) {
+      #ifdef ESP_ARDUINO_VERSION
+      this->tracef("LoRaE5 - Tx Power not set\r\n");
+      #else
       this->tracef(F("LoRaE5 - Tx Power not set\r\n"));
+      #endif
       return false;
   }
 
@@ -801,7 +811,11 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
              retDr = sendATCommand("AT+DR=DR0","+DR: ***** DR0","+DR: ERR","",this->atTimeout,false,NULL);
              break;
         default:
+             #ifdef ESP_ARDUINO_VERSION
+             this->tracef("LoRaE5 - Invalid SF\r\n");
+             #else
              this->tracef(F("LoRaE5 - Invalid SF\r\n"));
+             #endif
              return false;
       }
     } else if ( this->currentZone == DSKLORAE5_ZONE_US915 ) {
@@ -820,24 +834,35 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
              retDr = sendATCommand("AT+DR=DR0","+DR: ***** DR0","+DR: ERR","",this->atTimeout,false,NULL);
              break;
         default:
+             #ifdef ESP_ARDUINO_VERSION
+             this->tracef("LoRaE5 - Invalid SF\r\n");
+             #else
              this->tracef(F("LoRaE5 - Invalid SF\r\n"));
+             #endif
              return false;
       }
     } else {
       retDr = false;
     }
     if ( ! retDr ) {
+           #ifdef ESP_ARDUINO_VERSION
+           this->tracef("LoRaE5 - Impossible to set SF\r\n");
+           #else
            this->tracef(F("LoRaE5 - Impossible to set SF\r\n"));
+           #endif
            return false;       
     } else {
       this->lastSf = sf;
     }
   }
   if ( this->lastSf == __DSKLORAE5_UNSET ) {
+      #ifdef ESP_ARDUINO_VERSION
+      this->tracef("LoRaE5 - Invalid SF\r\n");
+      #else
       this->tracef(F("LoRaE5 - Invalid SF\r\n"));
+      #endif
       return false;
   }
-
 
   if ( retries != DSKLORAE5_RT_UNCHANGED && this->lastRetry != retries ) {
     // set retries
@@ -845,7 +870,11 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
     if ( sendATCommand(_cmd,"+RETRY:","+RETRY: ERR","",this->atTimeout,false,NULL) ) {
       this->lastRetry = retries;
     } else {
+      #ifdef ESP_ARDUINO_VERSION
+      this->tracef("LoRaE5 - Invalid Retry\r\n");
+      #else
       this->tracef(F("LoRaE5 - Invalid Retry\r\n"));
+      #endif
       return false;
     }
   }
@@ -853,7 +882,11 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
   // Set Pport
   sprintf(_cmd,"AT+PORT=%d",port);
   if ( !sendATCommand(_cmd,"+PORT:","+PORT: ERR","",this->atTimeout,false,NULL) ) {
+     #ifdef ESP_ARDUINO_VERSION
+     this->tracef("LoRaE5 - Port config refused\r\n");
+     #else
      this->tracef(F("LoRaE5 - Port config refused\r\n"));
+     #endif
      return false;
   }
 
@@ -913,8 +946,8 @@ bool Disk91_LoRaE5::sendReceive(    // send a message on LoRaWan, return true wh
       if ( !async && this->isBusy ) ret = false;
       return ret;
   } 
+  return false;
 }
-
 
 
 // ---------------------------------------------------------------------
@@ -989,8 +1022,6 @@ bool Disk91_LoRaE5::processTx(Disk91_LoRaE5 * wrap) {
   }
   return false;
 }
-
-
 // estimate the duty-cycle, this is really approximative and to compensate the absence of this 
 // infomration from the LoRaE5
 uint32_t Disk91_LoRaE5::estimateTxDuration(uint8_t sf, uint8_t payloadSz, uint8_t retries) {
@@ -1014,10 +1045,8 @@ uint32_t Disk91_LoRaE5::estimateTxDuration(uint8_t sf, uint8_t payloadSz, uint8_
       return __DSKLORAE5_NONDCZONE_DC;
    }
 }
-
 // =============================================================================
 // Manage Commands
-
 /**
  * Execute an AT command with a timeout
  * Search for okResp or errResp to determine is the command is a success or a fail
@@ -1037,7 +1066,11 @@ bool Disk91_LoRaE5::sendATCommand(
     bool (*lineProcessing)(Disk91_LoRaE5 *) 
 ) {
   if ( this->runningCommand ) {
+    #ifdef ESP_ARDUINO_VERSION
+    this->tracef("LoRaE5 - AT commande already processing\r\n");
+    #else
     this->tracef(F("LoRaE5 - AT commande already processing\r\n"));
+    #endif
     return false;
   }
   this->runningCommand = true;
@@ -1061,29 +1094,34 @@ bool Disk91_LoRaE5::sendATCommand(
 
   this->tracef("LoRaE5 - send ");
   this->tracef(cmd);
+  #ifdef ESP_ARDUINO_VERSION
+  this->tracef("\r\n");
+  #else
   this->tracef(F("\r\n"));
+  #endif
   if ( !async ) {
-    while ( ! processATResponse() );
+    while ( ! processATResponse() ) delay(1);
     return this->statusCommand;
   }
   return true;
 }
-
 /**
  * Process command response
  * return true when nothing more to be done
  */
 bool Disk91_LoRaE5::processATResponse() {
-
   // nothing to be done
   if ( !this->runningCommand ) return true;
-
   // manage timeout
   uint32_t duration  = millis() - this->startTime;   // overflow after 50D. risk taken.
   if ( duration > this->maxDuration ) {
     this->runningCommand = false;
     this->statusCommand = false;
+    #ifdef ESP_ARDUINO_VERSION
+    this->tracef("LoRaE5 - timeout\r\n");
+    #else
     this->tracef(F("LoRaE5 - timeout\r\n"));
+    #endif
     return true;
   }
   // process serial line response
@@ -1100,9 +1138,15 @@ bool Disk91_LoRaE5::processATResponse() {
         if ( this->respIndex > 0 ) {
           // process line response
           this->bufResponse[this->respIndex] = '\0';
+          #ifdef ESP_ARDUINO_VERSION
+          this->tracef("LoRaE5 - recv ");
+          this->tracef(this->bufResponse);
+          this->tracef("\r\n");
+          #else
           this->tracef(F("LoRaE5 - recv "));
           this->tracef(this->bufResponse);
           this->tracef(F("\r\n"));
+          #endif
           int i;
           if ( this->lineProcessing != NULL ) {
             if ( this->lineProcessing(this) ) {
@@ -1118,7 +1162,11 @@ bool Disk91_LoRaE5::processATResponse() {
               }
               this->statusCommand = false;
               this->respIndex = 0;
+              #ifdef ESP_ARDUINO_VERSION
+              this->tracef("LoRaE5 - AT ending with error\r\n");
+              #else
               this->tracef(F("LoRaE5 - AT ending with error\r\n"));
+              #endif
               return !this->withEndingCondition;
           }
           if ( strlen(this->bufOkResp) > 0 && startsWith(this->bufResponse,this->bufOkResp) ) {
@@ -1144,7 +1192,11 @@ bool Disk91_LoRaE5::processATResponse() {
             this->bufResponse[this->respIndex] = c;
             this->respIndex++;    
           } else {
+            #ifdef ESP_ARDUINO_VERSION
+            this->tracef("LoRaE5 - Response size overflow\r\n");
+            #else
             this->tracef(F("LoRaE5 - Response size overflow\r\n"));
+            #endif
             this->respIndex = 0;
           }
         }
@@ -1152,29 +1204,23 @@ bool Disk91_LoRaE5::processATResponse() {
   }
   return false;
 }
-
 // =============================================================================
 // Getters
 bool Disk91_LoRaE5::isAcked() {
     return this->hasAcked;
 }
-
 bool Disk91_LoRaE5::isJoined() {
     return this->hasJoined;
 }
-
 bool Disk91_LoRaE5::isDownlinkPending() {
     return this->downlinkPending;
 }
-
 bool Disk91_LoRaE5::isDownlinkReceived() {
     return this->downlinkReceived;
 }
-
 int16_t Disk91_LoRaE5::getRssi() {
     return (this->hasAcked )?this->lastRssi:DSKLORAE5_INVALID_RSSI;
 }
-
 int16_t Disk91_LoRaE5::getSnr() {
     return (this->hasAcked )?this->lastSnr:DSKLORAE5_INVALID_SNR;
 }
