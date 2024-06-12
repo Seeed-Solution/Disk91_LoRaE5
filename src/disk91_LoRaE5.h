@@ -148,6 +148,7 @@ protected:
     void tracef(const __FlashStringHelper *format, ...);
     #endif
     #endif
+
     bool sendATCommand(                     // Send an AT command to the E5 module
         const char * cmd,                       // command to be sent
         const char * okResp,                    // expected char string to be find in response to consider the AT execution a success, * is a joker
@@ -297,6 +298,12 @@ public:
     int16_t getRssi();                  // return last Ack RSSI when the previous uplink has been confirmed as received or DSKLORAE5_INVALID_RSSI
     int16_t getSnr();                   // return last Ack SNR when the previous uplink has been confirmed as received or DSKLORAE5_INVALID_SNR
 
+    bool setup_sensecap(        // Setup the LoRaWAN stack
+        uint8_t zone,           // radio zone selection
+        bool    selfDC = false, // when true, the duty cycle management is not managed by the module
+                                // but the user application
+        bool withADR = false    // when true, the ADR is turned ON
+    );
 };
 
 
